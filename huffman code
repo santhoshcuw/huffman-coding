@@ -1,0 +1,92 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_map>
+
+using namespace std;
+
+// Node structure for the Huffman tree
+struct Node {
+    char character;
+    int frequency;
+    Node *left;
+    Node *right;
+    
+    Node(char ch, int freq) {
+        character = ch;
+        frequency = freq;
+        left = nullptr;
+        right = nullptr;
+    }
+    
+    ~Node() {
+        delete left;
+        delete right;
+    }
+};
+
+// Comparison function for the priority queue
+struct CompareNodes {
+    bool operator() (const Node* lhs, const Node* rhs) const {
+        return lhs->frequency > rhs->frequency;
+    }
+};
+
+// Build the Huffman tree
+Node* buildHuffmanTree(const string& s, const vector<int>& f) {
+    priority_queue<Node*, vector<Node*>, CompareNodes> minHeap;
+    
+    // Create leaf nodes for each character and add them to the heap
+    for (int i = 0; i < s.size(); i++) {
+        minHeap.push(new Node(s[i], f[i]));
+    }
+    
+    // Combine the two nodes with the lowest frequency until there is only one node left
+    while (minHeap.size() > 1) {
+        Node* node1 = minHeap.top(); minHeap.pop();
+        Node* node2 = minHeap.top(); minHeap.pop();
+        
+        Node* parent = new Node('\0', node1->frequency + node2->frequency);
+        parent->left = node1;
+        parent->right = node2;
+        
+        minHeap.push(parent);
+    }
+    
+    return minHeap.top();
+}
+
+// Traverse the Huffman tree to get the codes for each character
+void traverseHuffmanTree(Node* node, string code, unordered_map<char, string>& codes) {
+    if (!node->left && !node->right) {
+        codes[node->character] = code;
+        return;
+    }
+    
+    traverseHuffmanTree(node->left, code + "0", codes);
+    traverseHuffmanTree(node->right, code + "1", codes);
+}
+
+// Print the Huffman codes for each character in the input string
+void printHuffmanCodes(const string& s, const vector<int>& f) {
+    unordered_map<char, string> codes;
+    Node* root = buildHuffmanTree(s, f);
+    traverseHuffmanTree(root, "", codes);
+    
+    for (char c : s) {
+        cout << codes[c] << " ";
+    }
+    cout << endl;
+    
+    delete root;
+}
+
+// Main function for testing
+int main() {
+    string s = "abcdef";
+    vector<int> f = {5, 9, 12, 13, 16, 45};
+    
+    printHuffmanCodes(s, f);
+    
+    return 0;
+}
